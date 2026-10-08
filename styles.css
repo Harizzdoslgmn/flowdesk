@@ -85,8 +85,13 @@ section{position:relative;z-index:2}
 .nav.is-solid{background:rgba(11,13,22,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .nav-logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:.02em}
 .nav-right{display:flex;align-items:center;gap:clamp(14px,2.5vw,32px)}
-.nav-link{font-size:13px;color:var(--muted-2);letter-spacing:.05em;transition:color .3s}
-.nav-link:hover{color:var(--text)}
+/* navbar de vidro (Apple glass nav, adaptada): pílula translúcida, item ativo branco com halo azul */
+.glass-nav{position:relative;display:flex;align-items:center;gap:8px;padding:6px;border-radius:100px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 0 0 1px rgba(0,0,0,.05),0 10px 15px -3px rgba(0,0,0,.25),0 4px 6px -4px rgba(0,0,0,.2)}
+.nav-link{position:relative;z-index:1;padding:6px 16px;border-radius:100px;font-size:14px;font-weight:500;color:rgba(255,255,255,.62);transition:color .3s}
+.nav-link:hover{color:#fff}
+.nav-link.is-active{color:#0B0D16}
+.glass-pill{position:absolute;top:6px;left:0;height:calc(100% - 12px);width:0;border-radius:100px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 1px 3px rgba(0,0,0,.12),0 0 0 1px rgba(46,107,255,.22),0 8px 24px rgba(46,107,255,.30),0 0 32px rgba(46,107,255,.28);opacity:0;transition:transform .45s cubic-bezier(.22,1,.36,1),width .45s cubic-bezier(.22,1,.36,1),opacity .3s}
+.glass-pill.is-on{opacity:1}
 .nav-cta{font-size:13px;padding:10px 22px;border-radius:100px;background:linear-gradient(100deg,var(--azul-claro),var(--azul));color:#0B0D16;font-weight:700;white-space:nowrap;box-shadow:0 0 24px rgba(46,107,255,.4);transition:transform .3s,box-shadow .3s}
 .nav-cta:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(46,107,255,.6)}
 .nav-menu{position:relative;display:none}
@@ -308,7 +313,7 @@ section{position:relative;z-index:2}
   .inside-list::before{left:100px}
 }
 @media (max-width:900px){
-  .nav-link{display:none}
+  .glass-nav{display:none}
   .nav-menu{display:block}
   .hero{padding-top:84px}
   .hero-screen{margin-bottom:-24px}
@@ -360,6 +365,7 @@ section{position:relative;z-index:2}
 
 /* menos movimento: nada se mexe, tudo visível */
 @media (prefers-reduced-motion:reduce){
+  .glass-pill{transition:none}
   .app-chip{animation:none}
   .net path,.connector path,.sig-connector path{stroke-dasharray:none!important;stroke-dashoffset:0!important}
   .net path[data-pulse],.connector path[data-pulse],.sig-connector path[data-pulse],.i-pulse,.s-pulse{display:none}

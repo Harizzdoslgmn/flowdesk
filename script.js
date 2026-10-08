@@ -92,6 +92,35 @@
 
   /* ───────── nav ───────── */
   const nav = document.getElementById('nav');
+  /* ───────── navbar de vidro: a pílula branca desliza até a seção ativa ───────── */
+  const glassNav = document.getElementById('glassNav');
+  if (glassNav) {
+    const pill = glassNav.querySelector('.glass-pill');
+    const links = [...glassNav.querySelectorAll('.nav-link')];
+    const alvos = links.map(l => document.querySelector(l.getAttribute('href')));
+    let atual = null;
+    function movePill(a) {
+      if (!a) return;
+      pill.style.transform = 'translateX(' + a.offsetLeft + 'px)';
+      pill.style.width = a.offsetWidth + 'px';
+      pill.classList.add('is-on');
+      links.forEach(l => l.classList.toggle('is-active', l === a));
+      atual = a;
+    }
+    function ativaPorScroll() {
+      const y = scrollY + innerHeight * .35;
+      let i = 0;
+      alvos.forEach((s, k) => { if (s && s.getBoundingClientRect().top + scrollY <= y) i = k; });
+      movePill(links[i]);
+    }
+    addEventListener('scroll', ativaPorScroll, { passive: true });
+    addEventListener('resize', () => movePill(atual || links[0]));
+    links.forEach(l => l.addEventListener('click', () => movePill(l)));
+    ativaPorScroll();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(ativaPorScroll);
+    addEventListener('load', ativaPorScroll);
+  }
+
   const menuWrap = document.getElementById('navMenuWrap');
   const menuBtn = document.getElementById('navMenuBtn');
   if (menuBtn) {

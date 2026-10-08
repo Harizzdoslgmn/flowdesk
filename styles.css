@@ -108,7 +108,13 @@ section{position:relative;z-index:2}
 .btn-primary--lg{padding:18px 40px;font-size:16px}
 .btn-ghost{display:inline-flex;align-items:center;padding:16px 26px;border-radius:100px;border:1px solid rgba(234,237,245,.22);color:var(--text);font-weight:500;font-size:15px;background:rgba(234,237,245,.04);transition:border-color .3s,transform .3s;white-space:nowrap}
 .btn-ghost:hover{border-color:rgba(127,166,255,.6);transform:translateY(-2px)}
-@media (pointer:coarse){.btn-primary,.btn-ghost,.nav-cta{min-height:44px}}
+@media (pointer:coarse){
+  .btn-primary,.btn-ghost,.nav-cta,.menu-btn,.plan,.steps-dots button{min-height:44px}
+  .steps-dots button{min-width:44px}
+  .nav-drop a{padding:13px 12px}
+  .footer-links a{padding:10px 4px;margin:-10px -4px}
+  .faq-item summary{min-height:56px}
+}
 
 /* molduras de tela (no lugar dos celulares da referência) */
 .screen-frame{position:relative;background:#0A0B0D;border-radius:18px;overflow:hidden;border:1px solid rgba(127,166,255,.22);box-shadow:0 0 0 1px rgba(0,0,0,.6),0 40px 120px rgba(0,0,0,.55),0 0 60px rgba(46,107,255,.12)}
@@ -301,7 +307,7 @@ section{position:relative;z-index:2}
 .footer-marca{width:34px;height:36px;opacity:.8}
 .footer-links{display:flex;gap:12px;font-size:13px;color:var(--muted-2);letter-spacing:.04em}
 .footer-links a:hover{color:var(--text)}
-.footer p{font-size:12px;color:var(--muted);letter-spacing:.05em;text-align:center}
+.footer p{font-size:13px;color:var(--muted);letter-spacing:.04em;text-align:center;line-height:1.6}
 .to-top{position:fixed;right:24px;bottom:24px;z-index:80;width:50px;height:50px;border-radius:50%;border:1px solid rgba(127,166,255,.35);background:rgba(11,13,22,.85);color:var(--azul-claro);display:grid;place-items:center;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;transform:translateY(8px)}
 .to-top.is-on{opacity:1;pointer-events:auto;transform:none}
 .to-top:hover{background:var(--azul-dim)}
@@ -358,9 +364,29 @@ section{position:relative;z-index:2}
   .screen-frame--steps{aspect-ratio:4/3}
   .step-shot{width:230%;height:auto;left:-58%;top:-4%;object-fit:unset;max-width:none}
   .price-card{padding:30px 20px}
-  .plan{padding:8px 12px;font-size:12px}
+  .plan{padding:8px 10px;font-size:13px}
   .footer-links{flex-wrap:wrap;justify-content:center}
   .to-top{right:16px;bottom:16px;width:46px;height:46px}
+}
+@media (max-width:380px){
+  .nav{padding:12px 12px}
+  .nav-logo span{display:none}
+  .nav-right{gap:8px}
+  .nav-cta{padding:9px 12px;font-size:12.5px}
+  .hero-title{font-size:clamp(28px,8.6vw,34px)}
+}
+/* celular deitado: o título precisa caber na primeira dobra */
+@media (max-height:520px) and (orientation:landscape){
+  .hero{min-height:auto;padding:84px 0 40px}
+  .hero-screen{width:min(520px,70vw);margin-bottom:-40px}
+  .hero-screen .screen-frame{aspect-ratio:760/190}
+  .hero-title{font-size:clamp(28px,5vw,40px);margin-bottom:10px}
+  .hero-sub{margin-bottom:12px;font-size:14px}
+  .hero-visual{height:150px;margin-top:16px}
+  .hero-chip{width:64px;top:96px}
+  .statement-pin{min-height:auto;padding:80px var(--space-inline)}
+  .connector{height:90px;min-height:0}
+  .connector--longo{height:120px;min-height:0}
 }
 
 /* menos movimento: nada se mexe, tudo visível */

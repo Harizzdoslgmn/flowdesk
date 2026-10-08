@@ -7,10 +7,63 @@
   /* ───────── CTA: WhatsApp ou, enquanto não há número, DM do Instagram ───────── */
   // Número do WhatsApp comercial, só dígitos com DDI+DDD. Ex.: 5511999999999
   const WHATSAPP = '5511977160644';
-  const MENSAGEM = 'Oi! Vim pelo site do FlowDesk e quero saber mais sobre o teste de 3 dias.';
+  const MENSAGEM_BASE = 'Oi! Vim pelo site do FlowDesk e quero saber mais sobre o teste de 3 dias.';
+
+  /* ───────── medição e captação (preencha e pronto) ─────────
+     META_PIXEL_ID: o número do Pixel no Gerenciador de Eventos do Meta (ex.: '1234567890').
+     GA4_ID: o ID de fluxo do Google Analytics 4 (ex.: 'G-XXXXXXX').
+     LEAD_NTFY_TOPIC: nome secreto do tópico no ntfy.sh (ex.: 'flowdesk-leads-7f3k9'); assine o mesmo
+       tópico no app ntfy do celular e cada formulário enviado vira uma notificação. Vazio = o formulário
+       abre o WhatsApp com os dados preenchidos. */
+  const META_PIXEL_ID = '';
+  const GA4_ID = '';
+  const LEAD_NTFY_TOPIC = '';
+
+  /* de onde a pessoa veio (primeiro toque fica guardado) */
+  const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  let utm = {};
+  try {
+    const q = new URLSearchParams(location.search);
+    const novo = {}; UTM_KEYS.forEach(k => { if (q.get(k)) novo[k] = q.get(k).slice(0, 80); });
+    const salvo = JSON.parse(localStorage.getItem('fd_utm') || 'null');
+    utm = Object.keys(novo).length ? novo : (salvo || {});
+    if (Object.keys(novo).length) localStorage.setItem('fd_utm', JSON.stringify(novo));
+  } catch (e) { utm = {}; }
+  const origem = utm.utm_source ? [utm.utm_source, utm.utm_campaign || utm.utm_medium].filter(Boolean).join('/') : (document.referrer ? (new URL(document.referrer).hostname.replace('www.', '')) : 'direto');
+  const MENSAGEM = MENSAGEM_BASE + (origem !== 'direto' ? ' (ref: ' + origem + ')' : '');
+
+  function rastrear(evento, dados) {
+    dados = Object.assign({ origem: origem }, utm, dados || {});
+    try { if (window.fbq) fbq('track', evento === 'lead' ? 'Lead' : evento === 'plano' ? 'ViewContent' : 'Contact', dados); } catch (e) {}
+    try { if (window.gtag) gtag('event', evento === 'lead' ? 'generate_lead' : evento === 'plano' ? 'select_item' : 'contact', dados); } catch (e) {}
+  }
+  function iniciarMedicao() {
+    if (META_PIXEL_ID && !window.fbq) {
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', META_PIXEL_ID); fbq('track', 'PageView');
+    }
+    if (GA4_ID && !window.gtag) {
+      const g = document.createElement('script'); g.async = true; g.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4_ID; document.head.appendChild(g);
+      window.dataLayer = window.dataLayer || []; window.gtag = function () { dataLayer.push(arguments); };
+      gtag('js', new Date()); gtag('config', GA4_ID, { anonymize_ip: true });
+    }
+  }
+  function consentimento() {
+    if (!META_PIXEL_ID && !GA4_ID) return;
+    let escolha = null; try { escolha = localStorage.getItem('fd_consent'); } catch (e) {}
+    if (escolha === 'sim') return iniciarMedicao();
+    if (escolha === 'nao') return;
+    const box = document.createElement('div'); box.className = 'consent'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Cookies');
+    box.innerHTML = '<p>Usamos cookies de medição (Meta e Google) para saber de onde você veio e melhorar os anúncios. Nada de dados pessoais sem o seu contato. <a href="privacidade.html">Saiba mais</a></p><div class="consent-acoes"><button type="button" class="sim">Aceitar</button><button type="button" class="nao">Só o essencial</button></div>';
+    document.body.appendChild(box);
+    box.querySelector('.sim').addEventListener('click', () => { try { localStorage.setItem('fd_consent', 'sim'); } catch (e) {} box.remove(); iniciarMedicao(); });
+    box.querySelector('.nao').addEventListener('click', () => { try { localStorage.setItem('fd_consent', 'nao'); } catch (e) {} box.remove(); });
+  }
+  consentimento();
   const INSTAGRAM_DM = 'https://ig.me/m/flowdeskcrm';
   document.querySelectorAll('.js-wpp').forEach(a => {
     a.target = '_blank'; a.rel = 'noopener';
+    a.addEventListener('click', () => rastrear('lead', { metodo: 'whatsapp', local: (a.closest('section, .nav, .barra-cta') || {}).id || 'nav' }));
     const texto = a.querySelector('span');
     if (WHATSAPP) {
       a.href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(MENSAGEM);
@@ -35,6 +88,57 @@
       document.body.prepend(aviso);
     }
   }
+
+  /* ───────── formulário "prefere que a gente te chame?" ───────── */
+  const leadForm = document.getElementById('leadForm');
+  if (leadForm) {
+    const ok = document.getElementById('leadOk');
+    leadForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const nome = leadForm.nome.value.trim(), zap = leadForm.whatsapp.value.replace(/\D/g, ''), hora = leadForm.horario.value;
+      leadForm.nome.setAttribute('aria-invalid', nome.length < 2); leadForm.whatsapp.setAttribute('aria-invalid', zap.length < 10 || zap.length > 13);
+      if (nome.length < 2 || zap.length < 10 || zap.length > 13) { (nome.length < 2 ? leadForm.nome : leadForm.whatsapp).focus(); return; }
+      const botao = leadForm.querySelector('button[type=submit]'); botao.disabled = true; botao.textContent = 'Enviando…';
+      const texto = nome + ' pediu contato pelo site. WhatsApp: ' + zap + '. Horário: ' + hora + '. Origem: ' + origem + '.';
+      let enviado = false;
+      if (LEAD_NTFY_TOPIC) {
+        try {
+          const r = await fetch('https://ntfy.sh/' + encodeURIComponent(LEAD_NTFY_TOPIC), { method: 'POST', body: texto, headers: { 'Title': 'Lead FlowDesk: ' + nome, 'Priority': 'high', 'Tags': 'telephone_receiver' } });
+          enviado = r.ok;
+        } catch (err) { enviado = false; }
+      }
+      rastrear('lead', { metodo: enviado ? 'formulario' : 'formulario-whatsapp' });
+      if (enviado) {
+        ok.textContent = 'Anotado, ' + nome.split(' ')[0] + '. Uma pessoa da equipe chama você no ' + zap.replace(/^55/, '') + ' no horário comercial (9h às 18h).';
+      } else {
+        const msg = 'Oi! Sou ' + nome + '. Pode me chamar no ' + zap + ' (' + hora.toLowerCase() + ') para falar do teste de 3 dias do FlowDesk.' + (origem !== 'direto' ? ' (ref: ' + origem + ')' : '');
+        window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+        ok.textContent = 'Abrimos o WhatsApp com a sua mensagem pronta. É só enviar que a equipe chama você.';
+      }
+      ok.hidden = false; leadForm.classList.add('is-sent');
+    });
+  }
+
+  /* ───────── barra fixa no celular: aparece depois do herói, some perto do fecho ───────── */
+  const barra = document.getElementById('barraCta');
+  const secCta = document.getElementById('cta');
+  if (barra && secCta) {
+    document.body.classList.add('has-barra');
+    let ctaVisivel = false;
+    if ('IntersectionObserver' in window) new IntersectionObserver(es => { ctaVisivel = es[0].isIntersecting; atualizaBarra(); }, { threshold: .15 }).observe(secCta);
+    function atualizaBarra() { const on = scrollY > innerHeight * .9 && !ctaVisivel; barra.classList.toggle('is-on', on); barra.setAttribute('aria-hidden', !on); }
+    addEventListener('scroll', atualizaBarra, { passive: true }); addEventListener('load', atualizaBarra); addEventListener('hashchange', atualizaBarra); atualizaBarra(); setTimeout(atualizaBarra, 400);
+  }
+
+  /* ───────── a conta do retorno acompanha o plano escolhido ───────── */
+  const priceConta = document.getElementById('priceConta');
+  function atualizaConta(precoTexto) {
+    if (!priceConta) return;
+    const valor = parseFloat(String(precoTexto).replace(/\./g, '').replace(',', '.'));
+    const n = Math.max(1, Math.ceil(valor / 300));
+    priceConta.innerHTML = 'Faça a conta: se um orçamento que esfriou vale R$&nbsp;300 no seu negócio, <b>' + n + ' recuperado' + (n > 1 ? 's' : '') + ' por mês</b> ' + (n > 1 ? 'pagam' : 'paga') + ' este plano.';
+  }
+  atualizaConta('500,99');
 
   /* páginas secundárias (termos) param aqui: só CTA e navbar */
   if (!document.getElementById('hero')) return;
@@ -151,6 +255,8 @@
     planos.forEach(x => x.classList.toggle('is-active', x === b));
     priceValue.textContent = b.dataset.price;
     priceLabel.textContent = b.dataset.label;
+    atualizaConta(b.dataset.price);
+    rastrear('plano', { plano: b.dataset.label });
   }));
 
   /* ───────── passos: avançam sozinhos, 6 s cada ───────── */

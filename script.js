@@ -36,6 +36,9 @@
     }
   }
 
+  /* páginas secundárias (termos) param aqui: só CTA e navbar */
+  if (!document.getElementById('hero')) return;
+
   /* ───────── fundo: malha em perspectiva (canvas 2D, no lugar do Three.js da referência) ───────── */
   const gl = document.getElementById('gl');
   if (gl && !semMovimento) {

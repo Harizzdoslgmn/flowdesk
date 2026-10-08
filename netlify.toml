@@ -1,0 +1,20 @@
+# FlowDesk — site estático (sem build)
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/termos-e-diretrizes"
+  to = "/termos-e-diretrizes.html"
+  status = 200
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
